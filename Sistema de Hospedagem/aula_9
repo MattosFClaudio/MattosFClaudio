@@ -1,0 +1,216 @@
+<!-- SCRIPT JS -->
+<script>
+  function aoAlterarPrestador(x) {
+            document.getElementById("id_prestador").value = x.value
+          }
+
+          $( document ).ready(function() {
+            preparaForm()
+
+            if (<?= id; ?> != 0) {
+              google.script.run.withSuccessHandler(function(retorno) {
+                document.getElementsByName("id")[0].value = retorno[0]
+                document.getElementsByName("prestador")[0].value = retorno[1]
+                document.getElementsByName("servico")[0].value = retorno[2]
+              }).backend("lerServicoPrestadoEspecifico", <?= id; ?>)
+            }
+	        });
+
+    function preparaForm() {
+      google.script.run.withSuccessHandler(function(retorno) {
+        var dados = JSON.parse(retorno)
+        var prestadores = dados[0].slice(1, dados[0].length)
+        var servicos = dados[1].slice(1, dados[1].length)
+
+        // PRESTADORES
+        var prestador = document.getElementsByName('prestador')[0]
+        var selecionarPrestador =document.getElementById("modal_tbody_selecionar_prestador")
+        var tabelaPrestadorSelecionado = document.getElementById("tabela_prestador_selecionado")
+
+        prestadores.forEach((item) => {
+        var tr = document.createElement("tr")
+        tr.style.cursor = 'pointer'
+
+        tr.onclick = (e) => {
+        var tr = document.createElement('tr')
+
+        var td = document.createElement('td')
+          td.innerHTML = '<i class="bi bi-trash"></i>'
+          td.style.color = '#9c0000'
+          td.style.cursor = 'pointer'
+
+          td.onclick = (e2) => {
+          e2.currentTarget.parentNode.remove()
+          if( tabelaPrestadorSelecionado.getElementsByTagName("tr").length == 1) {
+            tabelaPrestadorSelecionado.getElementsByTagName("tr")[0].style.display = 'table-row'
+            }
+          }
+
+          tr.appendChild(td)
+          
+          var td = document.createElement('td')
+            td.innerHTML = item[0]
+            tr.appendChild(td)
+
+            var td = document.createElement('td')
+              td.innerHTML = item[1]
+              tr.appendChild(td)
+
+              tabelaPrestadorSelecionado.appendChild(tr)
+              tabelaPrestadorSelecionado.getElementsByTagName("tr")[0].style.display = 'none'
+
+              $('#modal_selecionar_prestador').modal('hide')
+          }
+
+          var td = document.createElement("td")
+            td.innerHTML = item[0]
+            tr.appendChild(td)
+
+           var td = document.createElement("td")
+            td.innerHTML = item[1]
+            tr.appendChild(td)
+            selecionarPrestador.appendChild(tr)
+          })
+
+          // SERVIÇOS
+          var servico = document.getElementsByName('servico')[0]
+          var selecionarServico =document.getElementById("modal_tbody_selecionar_servico")
+          var tabelaServicoSelecionado = document.getElementById("tabela_servico_selecionado")
+
+          servicos.forEach((item) => {
+            var tr = document.createElement("tr")
+            tr.style.cursor = 'pointer'
+
+            tr.onclick = (e) => {
+              var tr = document.createElement('tr')
+
+              var td = document.createElement('td')
+                td.innerHTML = '<i class="bi bi-trash"></i>'
+                td.style.color = '#9c0000'
+                td.style.cursor = 'pointer'
+
+                 td.onclick = (e2) => {
+                  e2.currentTarget.parentNode.remove()
+                  if( tabelaServicoSelecionado.getElementsByTagName("tr").length == 1) {
+                    tabelaServicoSelecionado.getElementsByTagName("tr")[0].style.display = 'table-row'
+                    }
+                  }
+
+                  tr.appendChild(td)
+
+                  var td = document.createElement('td')
+                  td.innerHTML = item[0]
+                  tr.appendChild(td)
+
+                  var td = document.createElement('td')
+                  td.innerHTML = item[1]
+                  tr.appendChild(td)
+
+                  var td = document.createElement('td')
+                  var input = document.createElement('input')
+
+                  input.type = 'number'
+                  input.className = 'form-control col-2'
+                  input.value = item[2]
+                  td.appendChild(input)
+                  tr.appendChild(td)
+
+
+                  tabelaServicoSelecionado.appendChild(tr)
+
+                  tabelaServicoSelecionado.getElementsByTagName("tr")[0].style.display = 'none'
+
+                  $('#modal_selecionar_servico').modal('hide')
+                }
+
+                var td = document.createElement("td")
+                td.innerHTML = item[0]
+                tr.appendChild(td)
+
+                var td = document.createElement("td")
+                td.innerHTML = item[1]
+                tr.appendChild(td)
+
+
+                selecionarServico.appendChild(tr)
+              })
+
+            }).backend('preparaFormServicosPrestados',)
+          }
+
+      function salvarServicoPrestado() {
+        var id = document.getElementsByName("id")[0].value
+
+        // PRESTADORES
+        var arrPrestadores = []
+        var tabelaPrestadores = document.getElementById("tabela_prestador_selecionado")
+        var todasTrs = tabelaPrestadores.querySelectorAll("tr")
+
+        todasTrs.forEach((item, index) => {
+        if (index > 0) {
+          var obj = {
+            idPrestador: item.getElementsByTagName("td")[1].innerHTML,
+            nomePrestador: item.getElementsByTagName("td")[2].innerHTML
+            }
+            arrPrestadores.push(obj)
+        }
+        console.log(arrPrestadores)
+        })
+
+        // SERVIÇOS
+        var arrServicos = []
+        var tabelaServicos = document.getElementById("tabela_servico_selecionado")
+        var todasTrs = tabelaServicos.querySelectorAll("tr")
+
+        todasTrs.forEach((item, index) => {
+        if (index > 0) {
+          var obj = {
+            idServico: item.getElementsByTagName("td")[1].innerHTML,
+            nomeServico: item.getElementsByTagName("td")[2].innerHTML,
+            valorServico: item.getElementsByTagName("td")[3].getElementsByTagName("input")[0].value,
+            }
+            arrServicos.push(obj)
+        }
+        console.log(arrServicos)
+        })  
+
+        var objLancamento = {
+          id: id,
+          servico: arrServicos,
+          prestador: arrPrestadores, 
+        } 
+
+        google.script.run.withSuccessHandler(function(retorno) {
+
+        }).backend("cadastrarServicoPrestado", objLancamento)
+    }
+
+    // FUNÇÕES DO MODAL PRESTADORES
+    function abreModalSelecionarPrestador() {
+            $('#modal_selecionar_prestador').modal('show')
+          }
+
+    function pesquisar(x) {
+      var tbodySelecionarPrestador = document.getElementById("modal_tbody_selecionar_prestador")
+      var todasAsLinhas = tbodySelecionarPrestador.querySelectorAll('tr')
+      var busca = x.value.toLowerCase()
+
+      todasAsLinhas.forEach((item) => {
+        var celula_0 = item.getElementsByTagName("td")[0].innerHTML.toLowerCase()
+        var celula_1 = item.getElementsByTagName("td")[1].innerHTML.toLowerCase()
+
+          if(celula_0.includes(busca) || celula_1.includes(busca)) {
+            item.style.display = "table-row"
+          } else {
+            item.style.display = "none"
+          }
+          })
+    }
+
+      // FUNÇÕES DO MODAL SERVIÇOS
+      function abreModalSelecionarServico() {
+        $('#modal_selecionar_servico').modal('show')
+      }
+
+
+</script>
